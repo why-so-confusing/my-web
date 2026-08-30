@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Zone Converter</title>
+<meta name="description" content="Convert any time between cities instantly. Find the date and time that works for everyone, in your language, on any device.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='42' fill='%230B111C' stroke='%23C9A227' stroke-width='5'/%3E%3Cline x1='50' y1='50' x2='50' y2='16' stroke='%23C9A227' stroke-width='5' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='74' y2='50' stroke='%23E8604C' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,480;0,9..144,600;1,9..144,480&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B111C;
+    --panel:#111927;
+    --panel-2:#16202F;
+    --line:#243044;
+    --brass:#C9A227;
+    --brass-soft:#8A7431;
+    --coral:#E8604C;
+    --teal:#4FD1C5;
+    --cream:#F2E9D8;
+    --text:#E9EDF4;
+    --text-dim:#8CA0BC;
+    --text-faint:#516378;
+    --night-band:#0C1220;
+    --twi-band:#1B2740;
+    --day-band:#2E4059;
+    --radius:14px;
+    --radius-sm:8px;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;}
+  html{scrollbar-color: var(--line) transparent;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(201,162,39,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(79,209,197,0.06), transparent 55%),
+      var(--ink);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a{color:inherit;}
+  ::selection{background:rgba(201,162,39,0.35);}
+  :focus-visible{outline:2px solid var(--teal); outline-offset:3px; border-radius:4px;}
+  button, input, select{font-family:inherit;}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:22px 0 10px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Fraunces', serif; font-size:18px; font-weight:600; letter-spacing:0.005em;}
+  .brand svg{flex:none;}
+
+  .lang-select{
+    background:var(--panel); border:1px solid var(--line); color:var(--text-dim);
+    font-size:12.5px; padding:8px 10px; border-radius:8px; cursor:pointer;
+  }
+  .lang-select:hover{color:var(--text); border-color:var(--brass-soft);}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:36px 0 34px; border-bottom:1px solid var(--line);}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.14em;
+    color:var(--brass); text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:16px;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--coral); box-shadow:0 0 0 3px rgba(232,96,76,0.18); animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+
+  .hero-grid{display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:end;}
+  h1{
+    font-family:'Fraunces', serif; font-weight:480; font-style:italic;
+    font-size:clamp(26px, 4vw, 44px); line-height:1.12; margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h1 .accent{font-style:normal; font-weight:600; color:var(--brass);}
+  .hero p.lede{font-size:15.5px; line-height:1.6; color:var(--text-dim); max-width:48ch; margin:0;}
+
+  .clock-card{
+    background:linear-gradient(165deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px; position:relative; overflow:hidden;
+  }
+  .clock-card::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(220px 140px at 90% -20%, rgba(201,162,39,0.12), transparent 70%);
+  }
+  .clock-card .label{font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); font-weight:600;}
+  .clock-card .city{font-family:'Fraunces', serif; font-size:19px; font-weight:600; margin-top:3px;}
+  .clock-card .country{font-size:12px; color:var(--text-dim); margin-top:1px;}
+  .clock-card .digits{
+    font-family:'IBM Plex Mono', monospace; font-size:clamp(34px,4.6vw,46px); font-weight:500;
+    letter-spacing:0.01em; margin:10px 0 2px; font-variant-numeric:tabular-nums;
+  }
+  .clock-card .digits span.sec{color:var(--text-dim); font-size:0.55em;}
+  .clock-card .date{font-size:12.5px; color:var(--text-dim); font-family:'IBM Plex Mono', monospace;}
+  .clock-card .change-row{margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .link-btn{
+    background:none; border:0; color:var(--teal); font-size:12px; cursor:pointer; padding:0;
+    text-decoration:underline; text-underline-offset:3px; font-family:'Inter';
+  }
+  .link-btn:hover{color:var(--cream);}
+  .geo-note{font-size:11.5px; color:var(--text-faint); font-family:'Inter';}
+
+  .home-search{margin-top:10px; position:relative; display:none;}
+  .home-search.open{display:block;}
+
+  /* ---------- Add city / date-time controls ---------- */
+  .add-bar{padding:24px 0 6px;}
+  .add-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .search-wrap{position:relative; flex:1 1 260px; min-width:220px;}
+  input[type="text"], input[type="date"], input[type="time"]{
+    width:100%; background:var(--panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter'; font-size:14.5px; padding:12px 14px; border-radius:var(--radius-sm);
+  }
+  input[type="date"], input[type="time"]{font-family:'IBM Plex Mono', monospace; font-size:13.5px; flex:0 0 auto; width:auto;}
+  input[type="text"]::placeholder{color:var(--text-faint);}
+  input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus{border-color:var(--brass-soft);}
+  input::-webkit-calendar-picker-indicator{filter:invert(0.7);}
+  .dt-group{display:flex; gap:8px;}
+  .results{
+    position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:20;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
+    max-height:320px; overflow-y:auto; box-shadow:0 18px 40px rgba(0,0,0,0.45);
+  }
+  .results .group-label{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-faint); padding:10px 14px 4px;
+  }
+  .results button{
+    display:flex; width:100%; align-items:baseline; justify-content:space-between; gap:10px;
+    background:none; border:0; color:var(--text); text-align:left; padding:10px 14px; cursor:pointer;
+    font-family:'Inter'; font-size:14px; border-bottom:1px solid var(--line);
+  }
+  .results button:last-child{border-bottom:0;}
+  .results button:hover, .results button:focus-visible{background:rgba(201,162,39,0.1);}
+  .results .r-main{display:flex; flex-direction:column;}
+  .results .r-city{font-weight:500;}
+  .results .r-country{font-size:11.5px; color:var(--text-dim);}
+  .results .r-meta{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-dim); flex:none;}
+  .results .empty{padding:14px; color:var(--text-dim); font-size:13.5px;}
+
+  /* ---------- River section ---------- */
+  .river-section{padding:36px 0 28px;}
+  .river-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:14px; flex-wrap:wrap;}
+  .river-head h2{font-family:'Fraunces', serif; font-weight:600; font-size:21px; margin:0;}
+  .river-head .hint{font-size:12.5px; color:var(--text-dim);}
+
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;}
+  .ctrl-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:0.03em;
+    background:var(--panel); border:1px solid var(--line); color:var(--text-dim);
+    padding:8px 13px; border-radius:999px; cursor:pointer; transition:border-color .15s, color .15s;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible{border-color:var(--brass-soft); color:var(--text);}
+  .ctrl-btn.active{border-color:var(--brass); color:var(--brass); background:rgba(201,162,39,0.08);}
+  .time-readout{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--cream);
+    background:var(--panel); border:1px solid var(--line); padding:8px 13px; border-radius:999px;
+    margin-left:auto;
+  }
+  .time-readout b{color:var(--brass); font-weight:600;}
+
+  .river-scroll{overflow-x:auto; padding-bottom:6px; margin:0 -20px; padding-left:20px; padding-right:20px;}
+  .river{min-width:720px; position:relative;}
+
+  .ruler{display:grid; grid-template-columns:190px 1fr; margin-bottom:2px;}
+  .ruler-track{position:relative; height:22px;}
+  .ruler-tick{position:absolute; top:0; bottom:0; display:flex; align-items:flex-end; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-faint); transform:translateX(-50%);}
+  .ruler-tick.major{color:var(--text-dim);}
+
+  .row{display:grid; grid-template-columns:190px 1fr; align-items:stretch; margin-bottom:8px;}
+  .row-meta{
+    display:flex; flex-direction:column; justify-content:center; padding-right:12px; gap:1px;
+    border-right:1px solid var(--line); overflow:hidden;
+  }
+  .row-meta .rm-top{display:flex; align-items:center; gap:6px;}
+  .row-meta .rm-city{font-family:'Fraunces', serif; font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row-meta .rm-remove{
+    margin-left:auto; background:none; border:0; color:var(--text-faint); cursor:pointer;
+    font-size:15px; line-height:1; padding:2px 4px; border-radius:4px; flex:none;
+  }
+  .row-meta .rm-remove:hover, .row-meta .rm-remove:focus-visible{color:var(--coral);}
+  .row-meta .rm-country{font-size:10.5px; color:var(--text-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row-meta .rm-time{font-family:'IBM Plex Mono', monospace; font-size:18px; color:var(--brass); font-variant-numeric:tabular-nums; margin-top:3px;}
+  .row-meta .rm-date{font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dim); margin-top:1px;}
+  .row-meta.pinned .rm-city{color:var(--teal);}
+
+  .row-track{position:relative; height:50px; border-radius:8px; overflow:hidden; background:var(--night-band);}
+  .band-now{position:absolute; top:0; bottom:0; width:2px; background:var(--coral); box-shadow:0 0 8px rgba(232,96,76,0.7); z-index:3;}
+  .band-overlap{position:absolute; top:0; bottom:0; background:rgba(79,209,197,0.16); border-left:1px solid rgba(79,209,197,0.5); border-right:1px solid rgba(79,209,197,0.5); z-index:1;}
+  .row-track .hour-label{
+    position:absolute; bottom:3px; font-family:'IBM Plex Mono', monospace; font-size:9.5px; color:rgba(233,237,244,0.32);
+    transform:translateX(2px);
+  }
+
+  .cursor-line{position:absolute; top:0; bottom:0; width:2px; background:var(--brass); z-index:4; pointer-events:none; box-shadow:0 0 10px rgba(201,162,39,0.55);}
+  .cursor-line::before{content:''; position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:10px; height:10px; background:var(--brass); border-radius:50%;}
+
+  .slider-row{display:grid; grid-template-columns:190px 1fr; margin-top:2px;}
+  input[type="range"].cursor-range{
+    -webkit-appearance:none; appearance:none; width:100%; height:26px; background:transparent; margin:0; cursor:grab;
+  }
+  input[type="range"].cursor-range:active{cursor:grabbing;}
+  input[type="range"].cursor-range::-webkit-slider-runnable-track{height:2px; background:transparent;}
+  input[type="range"].cursor-range::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; margin-top:-7px; border-radius:50%;
+    background:var(--brass); border:3px solid var(--ink); box-shadow:0 0 0 1px var(--brass);
+  }
+  input[type="range"].cursor-range::-moz-range-track{height:2px; background:transparent;}
+  input[type="range"].cursor-range::-moz-range-thumb{
+    width:14px; height:14px; border-radius:50%; background:var(--brass); border:3px solid var(--ink); box-shadow:0 0 0 1px var(--brass);
+  }
+
+  .river-foot{display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding:0 2px 0 190px; flex-wrap:wrap; gap:10px;}
+  .river-foot .now-btn{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-dim); background:none; border:0; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:2px;}
+  .river-foot .now-btn:hover{color:var(--brass);}
+
+  /* ---------- Overlap / meeting planner card ---------- */
+  .overlap-card{
+    margin-top:24px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px;
+  }
+  .overlap-top{display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;}
+  .overlap-card .oc-icon{
+    width:36px; height:36px; border-radius:50%; background:rgba(79,209,197,0.12); border:1px solid rgba(79,209,197,0.4);
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .overlap-card h3{font-family:'Fraunces', serif; font-size:15px; font-weight:600; margin:0 0 3px; color:var(--teal);}
+  .overlap-card .oc-sub{font-size:11.5px; color:var(--text-faint); margin:0 0 6px;}
+  .overlap-card p{margin:0; font-size:13.5px; color:var(--text-dim); line-height:1.55; max-width:60ch;}
+  .overlap-card .window{font-family:'IBM Plex Mono', monospace; color:var(--text); font-weight:500;}
+  .overlap-card .secondary{margin-top:6px; font-size:12.5px; color:var(--text-faint);}
+  .wh-row{margin-top:14px; padding-top:14px; border-top:1px solid var(--line); display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--text-dim);}
+  .wh-row input{width:52px; text-align:center; padding:6px 4px;}
+
+  /* ---------- Footer ---------- */
+  footer{border-top:1px solid var(--line); margin-top:44px; padding:22px 0 46px;}
+  .foot-row{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;}
+  .foot-row .fp{font-size:12.5px; color:var(--text-faint);}
+  .share-btn{
+    display:inline-flex; align-items:center; gap:8px; font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); padding:9px 15px; border-radius:999px; cursor:pointer;
+  }
+  .share-btn:hover, .share-btn:focus-visible{border-color:var(--brass-soft);}
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:var(--panel-2); border:1px solid var(--brass-soft); color:var(--cream); padding:10px 18px;
+    border-radius:999px; font-family:'IBM Plex Mono', monospace; font-size:12.5px; transition:all .25s ease; pointer-events:none; z-index:50;
+    max-width:min(90vw, 420px); text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px){
+    .hero-grid{grid-template-columns:1fr; gap:22px;}
+  }
+  @media (max-width: 640px){
+    header.top{padding-top:16px;}
+    .hero{padding:26px 0 26px;}
+    .add-row{flex-direction:column;}
+    .dt-group{width:100%;}
+    .dt-group input{flex:1;}
+    .river{min-width:600px;}
+    .row-meta{width:130px;}
+    .row, .ruler, .slider-row{grid-template-columns:130px 1fr;}
+    .river-foot{padding-left:130px;}
+    .time-readout{margin-left:0; width:100%; text-align:center;}
+    .controls{gap:8px;}
+  }
+  @media (max-width: 420px){
+    .wrap{padding:0 14px;}
+    h1{font-size:24px;}
+    .clock-card .digits{font-size:32px;}
+    .river{min-width:520px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .eyebrow .dot{animation:none;}
+    *{scroll-behavior:auto !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#0B111C" stroke="#C9A227" stroke-width="6"/><line x1="50" y1="50" x2="50" y2="18" stroke="#C9A227" stroke-width="6" stroke-linecap="round"/><line x1="50" y1="50" x2="72" y2="50" stroke="#E8604C" stroke-width="6" stroke-linecap="round"/></svg>
+      <span data-i18n="brandName">Time Zone Converter</span>
+    </div>
+    <select class="lang-select" id="lang-select" aria-label="Language"></select>
+  </header>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> <span data-i18n="eyebrow">Live, right now</span></div>
+        <h1 id="hero-h1"></h1>
+        <p class="lede" data-i18n="lede">Set a date and time once, and see it converted for every city you add — built for finding the moment that actually works for everyone.</p>
+      </div>
+      <div class="clock-card">
+        <div class="label" data-i18n="yourTime">Your local time</div>
+        <div class="city" id="hero-city">—</div>
+        <div class="country" id="hero-country">—</div>
+        <div class="digits" id="hero-digits">--:--<span class="sec">:--</span></div>
+        <div class="date" id="hero-date">—</div>
+        <div class="change-row">
+          <button class="link-btn" id="change-home-btn" data-i18n="changeLocation">Not you? Change</button>
+          <button class="link-btn" id="precise-loc-btn" data-i18n="usePreciseLocation">Use precise location</button>
+        </div>
+        <div class="geo-note" id="geo-note" hidden></div>
+        <div class="home-search" id="home-search">
+          <input type="text" id="home-search-input" data-i18n-placeholder="searchPlaceholder" autocomplete="off">
+          <div class="results" id="home-results" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="add-bar">
+    <div class="add-row">
+      <div class="search-wrap">
+        <input type="text" id="city-search" data-i18n-placeholder="searchPlaceholder" autocomplete="off" aria-label="Add a city">
+        <div class="results" id="search-results" hidden></div>
+      </div>
+      <div class="dt-group">
+        <input type="date" id="date-picker" aria-label="Date">
+        <input type="time" id="time-picker" aria-label="Time" step="300">
+      </div>
+    </div>
+  </section>
+
+  <section class="river-section">
+    <div class="river-head">
+      <h2 data-i18n="compareTitle">Compare times</h2>
+      <div class="hint" data-i18n="compareHint">Drag the marker below, or set an exact date &amp; time above.</div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn active" data-jump="now" data-i18n="now">Now</button>
+      <button class="ctrl-btn" data-jump="-1" data-i18n="minus1h">−1h</button>
+      <button class="ctrl-btn" data-jump="1" data-i18n="plus1h">+1h</button>
+      <div class="time-readout"><span data-i18n="readingAt">Reading</span> <b id="readout-time">--:--</b> <span id="readout-zone"></span></div>
+    </div>
+
+    <div class="river-scroll">
+      <div class="river" id="river">
+        <div class="ruler">
+          <div></div>
+          <div class="ruler-track" id="ruler-track"></div>
+        </div>
+        <div id="rows-container"></div>
+        <div class="slider-row">
+          <div></div>
+          <input type="range" class="cursor-range" id="cursor-range" min="0" max="1439" step="5" value="720" aria-label="Time cursor">
+        </div>
+      </div>
+    </div>
+    <div class="river-foot">
+      <span class="hint" data-i18n="shadeNote">Shaded bands show night, dawn and day for each city.</span>
+      <button class="now-btn" id="jump-now-btn" data-i18n="jumpNow">Jump to now</button>
+    </div>
+
+    <div class="overlap-card">
+      <div class="overlap-top">
+        <div class="oc-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#4FD1C5" stroke-width="1.4"/><path d="M8 4.5V8l2.4 1.4" stroke="#4FD1C5" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h3 id="overlap-title" data-i18n="meetingTitle">Planning a meeting?</h3>
+          <p class="oc-sub" id="overlap-sub"></p>
+          <p id="overlap-text" data-i18n="overlapNeedMore">Add another city to find a time that works for both of you.</p>
+          <p class="secondary" id="overlap-secondary" hidden></p>
+        </div>
+      </div>
+      <div class="wh-row">
+        <span data-i18n="workingHours">Working hours</span>
+        <input type="number" id="wh-start" min="0" max="23" value="9" aria-label="Work hours start">–<input type="number" id="wh-end" min="1" max="24" value="18" aria-label="Work hours end">
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-row">
+      <span class="fp" data-i18n="footerNote">No accounts, no tracking — your cities live in the link you share.</span>
+      <button class="share-btn" id="share-btn">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 8.7 10 6.3M6 7.3l4-2.4M11.5 5A1.8 1.8 0 1 0 11.5 1.4 1.8 1.8 0 0 0 11.5 5ZM4.5 9.8A1.8 1.8 0 1 0 4.5 6.2a1.8 1.8 0 0 0 0 3.6ZM11.5 14.6a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z" stroke="#E9EDF4" stroke-width="1.1"/></svg>
+        <span data-i18n="shareLink">Copy shareable link</span>
+      </button>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= i18n ================= */
+  const T = {
+    en:{ brandName:"Time Zone Converter", eyebrow:"Live, right now",
+      h1a:"Convert any time, for ", h1b:"everyone", h1c:", instantly.",
+      lede:"Set a date and time once, and see it converted for every city you add — built for finding the moment that actually works for everyone.",
+      yourTime:"Your local time", changeLocation:"Not you? Change", usePreciseLocation:"Use precise location",
+      geoTrying:"Locating…", geoFailed:"Couldn't get precise location — using your device's timezone instead.",
+      searchPlaceholder:"Search a city or country…", searchEmpty:"No matching city — try another search.",
+      popularCities:"Popular cities", searchResults:"Search results",
+      compareTitle:"Compare times", compareHint:"Drag the marker below, or set an exact date & time above.",
+      now:"Now", minus1h:"−1h", plus1h:"+1h", readingAt:"Reading", jumpNow:"Jump to now",
+      shadeNote:"Shaded bands show night, dawn and day for each city.",
+      meetingTitle:"Planning a meeting?", comparing:"Comparing ", andMore:" more",
+      overlapNeedMore:"Add another city to find a time that works for both of you.",
+      overlapBest:"Best window today: ", overlapNarrow:"Narrow window today: ",
+      overlapNone:"No fully shared working hours today.", overlapNoneHint:"Try a different date, or widen the working-hours range below.",
+      alsoWorks:"Also works: ", workingHours:"Working hours",
+      removeCity:"Remove", shareLink:"Copy shareable link", linkCopied:"Link copied",
+      footerNote:"No accounts, no tracking — your cities live in the link you share.",
+      langName:"English" },
+    "zh-TW":{ brandName:"時區轉換器", eyebrow:"現在時刻",
+      h1a:"立即換算時間，讓 ", h1b:"每個人", h1c:" 都能對上。",
+      lede:"只要設定一次日期與時間，就能看到你新增的每個城市自動換算結果——專為找出大家都方便的時刻而設計。",
+      yourTime:"你的當地時間", changeLocation:"不是你？更改", usePreciseLocation:"使用精確位置",
+      geoTrying:"定位中…", geoFailed:"無法取得精確位置，改用裝置的時區設定。",
+      searchPlaceholder:"搜尋城市或國家…", searchEmpty:"找不到符合的城市，換個關鍵字試試。",
+      popularCities:"熱門城市", searchResults:"搜尋結果",
+      compareTitle:"比較時間", compareHint:"拖曳下方指標，或直接在上方設定日期與時間。",
+      now:"現在", minus1h:"−1 小時", plus1h:"+1 小時", readingAt:"目前顯示", jumpNow:"跳到現在",
+      shadeNote:"色塊顯示每個城市的夜晚、晨昏與白天。",
+      meetingTitle:"要安排會議嗎？", comparing:"正在比較 ", andMore:" 個城市",
+      overlapNeedMore:"再新增一個城市，找出雙方都方便的時間。",
+      overlapBest:"今天最佳時段：", overlapNarrow:"今天較短的時段：",
+      overlapNone:"今天沒有完全重疊的上班時段。", overlapNoneHint:"試試換個日期，或放寬下方的上班時間範圍。",
+      alsoWorks:"也可以：", workingHours:"上班時間",
+      removeCity:"移除", shareLink:"複製分享連結", linkCopied:"連結已複製",
+      footerNote:"不需註冊、不會追蹤——你的城市清單就存在分享連結裡。",
+      langName:"繁體中文" },
+    "zh-CN":{ brandName:"时区转换器", eyebrow:"实时",
+      h1a:"立即换算时间，让 ", h1b:"所有人", h1c:" 都能对上。",
+      lede:"只需设置一次日期和时间，就能看到你添加的每个城市自动换算结果——专为找到大家都方便的时刻而设计。",
+      yourTime:"你的当地时间", changeLocation:"不是你？更改", usePreciseLocation:"使用精确位置",
+      geoTrying:"定位中…", geoFailed:"无法获取精确位置，已改用设备的时区设置。",
+      searchPlaceholder:"搜索城市或国家…", searchEmpty:"没有匹配的城市，换个关键词试试。",
+      popularCities:"热门城市", searchResults:"搜索结果",
+      compareTitle:"比较时间", compareHint:"拖动下方标记，或直接在上方设置日期和时间。",
+      now:"现在", minus1h:"−1 小时", plus1h:"+1 小时", readingAt:"当前显示", jumpNow:"跳到现在",
+      shadeNote:"色块显示每个城市的夜晚、晨昏与白天。",
+      meetingTitle:"要安排会议吗？", comparing:"正在比较 ", andMore:" 个城市",
+      overlapNeedMore:"再添加一个城市，找到双方都方便的时间。",
+      overlapBest:"今天的最佳时段：", overlapNarrow:"今天较短的时段：",
+      overlapNone:"今天没有完全重叠的工作时间。", overlapNoneHint:"试试换个日期，或放宽下方的工作时间范围。",
+      alsoWorks:"也可以：", workingHours:"工作时间",
+      removeCity:"移除", shareLink:"复制分享链接", linkCopied:"链接已复制",
+      footerNote:"无需注册、不作追踪——你的城市列表就保存在分享链接中。",
+      langName:"简体中文" },
+    ja:{ brandName:"タイムゾーン変換ツール", eyebrow:"現在時刻",
+      h1a:"時間を変換して、", h1b:"みんな", h1c:"に合わせる。",
+      lede:"日時を一度設定するだけで、追加した都市ごとの時刻に自動変換されます。誰にとっても都合の良い時間を見つけるためのツールです。",
+      yourTime:"あなたの現地時間", changeLocation:"違いますか？変更", usePreciseLocation:"正確な位置情報を使う",
+      geoTrying:"位置情報を取得中…", geoFailed:"正確な位置情報を取得できませんでした。デバイスのタイムゾーンを使用します。",
+      searchPlaceholder:"都市または国を検索…", searchEmpty:"該当する都市が見つかりません。別のキーワードをお試しください。",
+      popularCities:"人気の都市", searchResults:"検索結果",
+      compareTitle:"時間を比較", compareHint:"下のマーカーをドラッグするか、上で日時を直接設定してください。",
+      now:"現在", minus1h:"−1時間", plus1h:"+1時間", readingAt:"表示中", jumpNow:"現在に戻る",
+      shadeNote:"色の帯は各都市の夜・薄明・昼を示します。",
+      meetingTitle:"会議の調整ですか？", comparing:"比較中： ", andMore:"件",
+      overlapNeedMore:"もう1つ都市を追加すると、お互いに都合の良い時間が見つかります。",
+      overlapBest:"本日の最適な時間帯：", overlapNarrow:"本日の短い重なり：",
+      overlapNone:"本日、勤務時間が完全に重なりません。", overlapNoneHint:"日付を変えるか、下の勤務時間の範囲を広げてみてください。",
+      alsoWorks:"他にも： ", workingHours:"勤務時間",
+      removeCity:"削除", shareLink:"共有リンクをコピー", linkCopied:"リンクをコピーしました",
+      footerNote:"アカウント登録・トラッキングは不要——都市リストは共有リンクに保存されます。",
+      langName:"日本語" },
+    ko:{ brandName:"시간대 변환기", eyebrow:"실시간",
+      h1a:"시간을 변환해서, ", h1b:"모두", h1c:"에게 맞추세요.",
+      lede:"날짜와 시간을 한 번만 설정하면 추가한 모든 도시로 자동 변환됩니다. 모두에게 맞는 시간을 찾기 위한 도구입니다.",
+      yourTime:"내 현지 시간", changeLocation:"내가 아닌가요? 변경", usePreciseLocation:"정확한 위치 사용",
+      geoTrying:"위치 확인 중…", geoFailed:"정확한 위치를 가져오지 못했습니다. 기기의 시간대를 사용합니다.",
+      searchPlaceholder:"도시 또는 국가 검색…", searchEmpty:"일치하는 도시가 없습니다. 다른 검색어를 시도해 보세요.",
+      popularCities:"인기 도시", searchResults:"검색 결과",
+      compareTitle:"시간 비교", compareHint:"아래 마커를 드래그하거나 위에서 날짜와 시간을 직접 설정하세요.",
+      now:"지금", minus1h:"−1시간", plus1h:"+1시간", readingAt:"표시 중", jumpNow:"지금으로 이동",
+      shadeNote:"음영은 각 도시의 밤, 새벽/저녁, 낮을 나타냅니다.",
+      meetingTitle:"회의를 계획 중이신가요?", comparing:"비교 중: ", andMore:"곳 더",
+      overlapNeedMore:"도시를 하나 더 추가하면 서로에게 맞는 시간을 찾을 수 있어요.",
+      overlapBest:"오늘의 최적 시간대: ", overlapNarrow:"오늘의 짧은 겹침: ",
+      overlapNone:"오늘은 완전히 겹치는 근무 시간이 없습니다.", overlapNoneHint:"날짜를 바꾸거나 아래 근무 시간 범위를 넓혀보세요.",
+      alsoWorks:"다른 옵션: ", workingHours:"근무 시간",
+      removeCity:"삭제", shareLink:"공유 링크 복사", linkCopied:"링크가 복사되었습니다",
+      footerNote:"가입도 추적도 없습니다 — 도시 목록은 공유 링크에 저장됩니다.",
+      langName:"한국어" },
+    es:{ brandName:"Conversor de Zonas Horarias", eyebrow:"En vivo, ahora mismo",
+      h1a:"Convierte cualquier hora para ", h1b:"todos", h1c:", al instante.",
+      lede:"Elige una fecha y hora una sola vez, y compárala automáticamente en cada ciudad que agregues — pensado para encontrar el momento que funcione para todos.",
+      yourTime:"Tu hora local", changeLocation:"¿No eres tú? Cambiar", usePreciseLocation:"Usar ubicación precisa",
+      geoTrying:"Localizando…", geoFailed:"No se pudo obtener tu ubicación precisa; usando la zona horaria del dispositivo.",
+      searchPlaceholder:"Busca una ciudad o país…", searchEmpty:"Ninguna ciudad coincide — prueba otra búsqueda.",
+      popularCities:"Ciudades populares", searchResults:"Resultados",
+      compareTitle:"Comparar horas", compareHint:"Arrastra el marcador de abajo, o fija una fecha y hora exacta arriba.",
+      now:"Ahora", minus1h:"−1 h", plus1h:"+1 h", readingAt:"Mostrando", jumpNow:"Ir a ahora",
+      shadeNote:"Las bandas muestran la noche, el amanecer/atardecer y el día de cada ciudad.",
+      meetingTitle:"¿Planeando una reunión?", comparing:"Comparando ", andMore:" más",
+      overlapNeedMore:"Agrega otra ciudad para encontrar un horario que funcione para ambos.",
+      overlapBest:"Mejor franja de hoy: ", overlapNarrow:"Franja breve de hoy: ",
+      overlapNone:"Hoy no hay horario laboral compartido.", overlapNoneHint:"Prueba otra fecha o amplía el horario laboral abajo.",
+      alsoWorks:"También funciona: ", workingHours:"Horario laboral",
+      removeCity:"Quitar", shareLink:"Copiar enlace para compartir", linkCopied:"Enlace copiado",
+      footerNote:"Sin cuentas ni rastreo — tus ciudades viven en el enlace que compartes.",
+      langName:"Español" },
+    fr:{ brandName:"Convertisseur de Fuseaux Horaires", eyebrow:"En direct",
+      h1a:"Convertissez l'heure pour ", h1b:"tout le monde", h1c:", instantanément.",
+      lede:"Choisissez une date et une heure une seule fois, et voyez-la convertie pour chaque ville ajoutée — conçu pour trouver le moment qui convient à tous.",
+      yourTime:"Votre heure locale", changeLocation:"Pas vous ? Changer", usePreciseLocation:"Utiliser la position précise",
+      geoTrying:"Localisation…", geoFailed:"Impossible d'obtenir votre position précise ; utilisation du fuseau de l'appareil.",
+      searchPlaceholder:"Rechercher une ville ou un pays…", searchEmpty:"Aucune ville correspondante — essayez une autre recherche.",
+      popularCities:"Villes populaires", searchResults:"Résultats",
+      compareTitle:"Comparer les horaires", compareHint:"Faites glisser le repère ci-dessous, ou réglez une date et heure précises ci-dessus.",
+      now:"Maintenant", minus1h:"−1 h", plus1h:"+1 h", readingAt:"Affichage", jumpNow:"Revenir à maintenant",
+      shadeNote:"Les bandes indiquent la nuit, l'aube/crépuscule et le jour de chaque ville.",
+      meetingTitle:"Vous planifiez une réunion ?", comparing:"Comparaison de ", andMore:" de plus",
+      overlapNeedMore:"Ajoutez une autre ville pour trouver un horaire qui convient aux deux.",
+      overlapBest:"Meilleur créneau aujourd'hui : ", overlapNarrow:"Créneau court aujourd'hui : ",
+      overlapNone:"Aucun horaire de travail commun aujourd'hui.", overlapNoneHint:"Essayez une autre date, ou élargissez la plage horaire ci-dessous.",
+      alsoWorks:"Autre option : ", workingHours:"Heures de travail",
+      removeCity:"Retirer", shareLink:"Copier le lien de partage", linkCopied:"Lien copié",
+      footerNote:"Sans compte ni suivi — vos villes vivent dans le lien que vous partagez.",
+      langName:"Français" },
+    de:{ brandName:"Zeitzonen-Umrechner", eyebrow:"Live, jetzt gerade",
+      h1a:"Zeit umrechnen — für ", h1b:"alle", h1c:", sofort.",
+      lede:"Datum und Uhrzeit einmal festlegen und sofort für jede hinzugefügte Stadt umgerechnet sehen — entwickelt, um den Moment zu finden, der für alle passt.",
+      yourTime:"Deine Ortszeit", changeLocation:"Nicht du? Ändern", usePreciseLocation:"Genauen Standort verwenden",
+      geoTrying:"Standort wird ermittelt…", geoFailed:"Genauer Standort nicht verfügbar — verwende die Zeitzone des Geräts.",
+      searchPlaceholder:"Stadt oder Land suchen…", searchEmpty:"Keine passende Stadt — andere Suche versuchen.",
+      popularCities:"Beliebte Städte", searchResults:"Suchergebnisse",
+      compareTitle:"Zeiten vergleichen", compareHint:"Ziehe den Marker unten oder stelle oben Datum und Uhrzeit direkt ein.",
+      now:"Jetzt", minus1h:"−1 Std.", plus1h:"+1 Std.", readingAt:"Anzeige", jumpNow:"Zu jetzt springen",
+      shadeNote:"Die Bänder zeigen Nacht, Dämmerung und Tag für jede Stadt.",
+      meetingTitle:"Ein Meeting planen?", comparing:"Vergleich von ", andMore:" weitere",
+      overlapNeedMore:"Füge eine weitere Stadt hinzu, um eine für beide passende Zeit zu finden.",
+      overlapBest:"Bestes Zeitfenster heute: ", overlapNarrow:"Kurzes Zeitfenster heute: ",
+      overlapNone:"Heute keine vollständig gemeinsamen Arbeitszeiten.", overlapNoneHint:"Versuche ein anderes Datum oder erweitere den Arbeitszeitraum unten.",
+      alsoWorks:"Geht auch: ", workingHours:"Arbeitszeit",
+      removeCity:"Entfernen", shareLink:"Link zum Teilen kopieren", linkCopied:"Link kopiert",
+      footerNote:"Keine Konten, kein Tracking — deine Städte stecken im geteilten Link.",
+      langName:"Deutsch" }
+  };
+  const LOCALE_TAG = {en:"en-US","zh-TW":"zh-TW","zh-CN":"zh-CN",ja:"ja-JP",ko:"ko-KR",es:"es-ES",fr:"fr-FR",de:"de-DE"};
+
+  function detectLang(){
+    const supported = Object.keys(T);
+    const stored = localStorage.getItem("tzc_lang");
+    if(stored && supported.includes(stored)) return stored;
+    const cands = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"];
+    for(const raw of cands){
+      const c = raw;
+      if(supported.includes(c)) return c;
+      const base = c.split("-")[0].toLowerCase();
+      if(base === "zh"){
+        if(/-(tw|hk|mo)$/i.test(c)) return "zh-TW";
+        return "zh-CN";
+      }
+      const match = supported.find(s=>s.split("-")[0].toLowerCase()===base);
+      if(match) return match;
+    }
+    return "en";
+  }
+  let LANG = detectLang();
+
+  function t(key){ return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T.en[key] || ""); }
+
+  function applyI18n(){
+    document.documentElement.lang = LANG;
+    document.querySelectorAll("[data-i18n]").forEach(el=>{
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{
+      el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+    });
+    document.getElementById("hero-h1").innerHTML =
+      escapeHtml(t("h1a")) + '<span class="accent">' + escapeHtml(t("h1b")) + "</span>" + escapeHtml(t("h1c"));
+    renderRows(); renderOverlap();
+  }
+
+  function escapeHtml(s){ return s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  const langSelect = document.getElementById("lang-select");
+  Object.keys(T).forEach(code=>{
+    const opt = document.createElement("option");
+    opt.value = code; opt.textContent = T[code].langName;
+    langSelect.appendChild(opt);
+  });
+  langSelect.value = LANG;
+  langSelect.addEventListener("change", ()=>{
+    LANG = langSelect.value;
+    localStorage.setItem("tzc_lang", LANG);
+    applyI18n();
+  });
+
+  /* ================= City data ================= */
+  // [city, country, IANA tz, famous(1/0)]
+  const RAW_CITIES = [
+    ["New York","United States","America/New_York",1],["Los Angeles","United States","America/Los_Angeles",1],
+    ["Chicago","United States","America/Chicago",1],["Houston","United States","America/Chicago",0],
+    ["Phoenix","United States","America/Phoenix",0],["Denver","United States","America/Denver",0],
+    ["San Francisco","United States","America/Los_Angeles",1],["Seattle","United States","America/Los_Angeles",0],
+    ["Miami","United States","America/New_York",0],["Boston","United States","America/New_York",0],
+    ["Washington, D.C.","United States","America/New_York",1],["Atlanta","United States","America/New_York",0],
+    ["Dallas","United States","America/Chicago",0],["Las Vegas","United States","America/Los_Angeles",0],
+    ["Honolulu","United States","Pacific/Honolulu",0],["Anchorage","United States","America/Anchorage",0],
+    ["Detroit","United States","America/New_York",0],["Minneapolis","United States","America/Chicago",0],
+    ["Philadelphia","United States","America/New_York",0],["San Diego","United States","America/Los_Angeles",0],
+    ["Portland","United States","America/Los_Angeles",0],["Austin","United States","America/Chicago",0],
+    ["New Orleans","United States","America/Chicago",0],["Salt Lake City","United States","America/Denver",0],
+    ["Toronto","Canada","America/Toronto",1],["Vancouver","Canada","America/Vancouver",1],
+    ["Montreal","Canada","America/Toronto",0],["Calgary","Canada","America/Edmonton",0],
+    ["Ottawa","Canada","America/Toronto",0],["Winnipeg","Canada","America/Winnipeg",0],
+    ["Halifax","Canada","America/Halifax",0],["St. John's","Canada","America/St_Johns",0],
+    ["Edmonton","Canada","America/Edmonton",0],
+    ["Mexico City","Mexico","America/Mexico_City",1],["Cancún","Mexico","America/Cancun",0],
+    ["Tijuana","Mexico","America/Tijuana",0],["Monterrey","Mexico","America/Monterrey",0],
+    ["Guatemala City","Guatemala","America/Guatemala",0],["San Salvador","El Salvador","America/El_Salvador",0],
+    ["Tegucigalpa","Honduras","America/Tegucigalpa",0],["Managua","Nicaragua","America/Managua",0],
+    ["San José","Costa Rica","America/Costa_Rica",0],["Panama City","Panama","America/Panama",0],
+    ["Havana","Cuba","America/Havana",0],["Kingston","Jamaica","America/Jamaica",0],
+    ["Santo Domingo","Dominican Republic","America/Santo_Domingo",0],["San Juan","Puerto Rico","America/Puerto_Rico",0],
+    ["Nassau","Bahamas","America/Nassau",0],["Port-au-Prince","Haiti","America/Port-au-Prince",0],
+    ["São Paulo","Brazil","America/Sao_Paulo",1],["Rio de Janeiro","Brazil","America/Sao_Paulo",1],
+    ["Brasília","Brazil","America/Sao_Paulo",0],["Manaus","Brazil","America/Manaus",0],
+    ["Buenos Aires","Argentina","America/Argentina/Buenos_Aires",1],["Santiago","Chile","America/Santiago",0],
+    ["Lima","Peru","America/Lima",0],["Bogotá","Colombia","America/Bogota",0],
+    ["Caracas","Venezuela","America/Caracas",0],["Quito","Ecuador","America/Guayaquil",0],
+    ["La Paz","Bolivia","America/La_Paz",0],["Montevideo","Uruguay","America/Montevideo",0],
+    ["Asunción","Paraguay","America/Asuncion",0],["Georgetown","Guyana","America/Guyana",0],
+    ["Paramaribo","Suriname","America/Paramaribo",0],
+    ["London","United Kingdom","Europe/London",1],["Paris","France","Europe/Paris",1],
+    ["Berlin","Germany","Europe/Berlin",1],["Madrid","Spain","Europe/Madrid",1],
+    ["Rome","Italy","Europe/Rome",1],["Amsterdam","Netherlands","Europe/Amsterdam",1],
+    ["Brussels","Belgium","Europe/Brussels",0],["Vienna","Austria","Europe/Vienna",0],
+    ["Zurich","Switzerland","Europe/Zurich",0],["Geneva","Switzerland","Europe/Zurich",0],
+    ["Dublin","Ireland","Europe/Dublin",0],["Lisbon","Portugal","Europe/Lisbon",0],
+    ["Stockholm","Sweden","Europe/Stockholm",0],["Oslo","Norway","Europe/Oslo",0],
+    ["Copenhagen","Denmark","Europe/Copenhagen",0],["Helsinki","Finland","Europe/Helsinki",0],
+    ["Warsaw","Poland","Europe/Warsaw",0],["Prague","Czech Republic","Europe/Prague",0],
+    ["Budapest","Hungary","Europe/Budapest",0],["Bucharest","Romania","Europe/Bucharest",0],
+    ["Sofia","Bulgaria","Europe/Sofia",0],["Athens","Greece","Europe/Athens",0],
+    ["Istanbul","Turkey","Europe/Istanbul",1],["Moscow","Russia","Europe/Moscow",1],
+    ["Saint Petersburg","Russia","Europe/Moscow",0],["Kyiv","Ukraine","Europe/Kyiv",0],
+    ["Minsk","Belarus","Europe/Minsk",0],["Vilnius","Lithuania","Europe/Vilnius",0],
+    ["Riga","Latvia","Europe/Riga",0],["Tallinn","Estonia","Europe/Tallinn",0],
+    ["Reykjavík","Iceland","Atlantic/Reykjavik",0],["Zagreb","Croatia","Europe/Zagreb",0],
+    ["Belgrade","Serbia","Europe/Belgrade",0],["Ljubljana","Slovenia","Europe/Ljubljana",0],
+    ["Bratislava","Slovakia","Europe/Bratislava",0],["Luxembourg","Luxembourg","Europe/Luxembourg",0],
+    ["Valletta","Malta","Europe/Malta",0],["Skopje","North Macedonia","Europe/Skopje",0],
+    ["Sarajevo","Bosnia and Herzegovina","Europe/Sarajevo",0],["Podgorica","Montenegro","Europe/Podgorica",0],
+    ["Tirana","Albania","Europe/Tirane",0],["Chișinău","Moldova","Europe/Chisinau",0],
+    ["Yekaterinburg","Russia","Asia/Yekaterinburg",0],["Novosibirsk","Russia","Asia/Novosibirsk",0],
+    ["Vladivostok","Russia","Asia/Vladivostok",0],
+    ["Cairo","Egypt","Africa/Cairo",1],["Lagos","Nigeria","Africa/Lagos",1],
+    ["Johannesburg","South Africa","Africa/Johannesburg",1],["Cape Town","South Africa","Africa/Johannesburg",0],
+    ["Nairobi","Kenya","Africa/Nairobi",0],["Addis Ababa","Ethiopia","Africa/Addis_Ababa",0],
+    ["Casablanca","Morocco","Africa/Casablanca",0],["Algiers","Algeria","Africa/Algiers",0],
+    ["Tunis","Tunisia","Africa/Tunis",0],["Tripoli","Libya","Africa/Tripoli",0],
+    ["Khartoum","Sudan","Africa/Khartoum",0],["Accra","Ghana","Africa/Accra",0],
+    ["Dakar","Senegal","Africa/Dakar",0],["Abidjan","Ivory Coast","Africa/Abidjan",0],
+    ["Kinshasa","DR Congo","Africa/Kinshasa",0],["Luanda","Angola","Africa/Luanda",0],
+    ["Dar es Salaam","Tanzania","Africa/Dar_es_Salaam",0],["Kampala","Uganda","Africa/Kampala",0],
+    ["Kigali","Rwanda","Africa/Kigali",0],["Harare","Zimbabwe","Africa/Harare",0],
+    ["Lusaka","Zambia","Africa/Lusaka",0],["Maputo","Mozambique","Africa/Maputo",0],
+    ["Windhoek","Namibia","Africa/Windhoek",0],["Gaborone","Botswana","Africa/Gaborone",0],
+    ["Yaoundé","Cameroon","Africa/Douala",0],["Freetown","Sierra Leone","Africa/Freetown",0],
+    ["Monrovia","Liberia","Africa/Monrovia",0],["Bamako","Mali","Africa/Bamako",0],
+    ["Ouagadougou","Burkina Faso","Africa/Ouagadougou",0],["Niamey","Niger","Africa/Niamey",0],
+    ["N'Djamena","Chad","Africa/Ndjamena",0],["Djibouti","Djibouti","Africa/Djibouti",0],
+    ["Mogadishu","Somalia","Africa/Mogadishu",0],["Antananarivo","Madagascar","Indian/Antananarivo",0],
+    ["Dubai","United Arab Emirates","Asia/Dubai",1],["Abu Dhabi","United Arab Emirates","Asia/Dubai",0],
+    ["Riyadh","Saudi Arabia","Asia/Riyadh",0],["Jeddah","Saudi Arabia","Asia/Riyadh",0],
+    ["Doha","Qatar","Asia/Qatar",0],["Kuwait City","Kuwait","Asia/Kuwait",0],
+    ["Manama","Bahrain","Asia/Bahrain",0],["Muscat","Oman","Asia/Muscat",0],
+    ["Amman","Jordan","Asia/Amman",0],["Beirut","Lebanon","Asia/Beirut",0],
+    ["Damascus","Syria","Asia/Damascus",0],["Baghdad","Iraq","Asia/Baghdad",0],
+    ["Tehran","Iran","Asia/Tehran",0],["Jerusalem","Israel","Asia/Jerusalem",0],
+    ["Tel Aviv","Israel","Asia/Jerusalem",0],
+    ["Mumbai","India","Asia/Kolkata",1],["Delhi","India","Asia/Kolkata",1],
+    ["Bengaluru","India","Asia/Kolkata",0],["Chennai","India","Asia/Kolkata",0],
+    ["Kolkata","India","Asia/Kolkata",0],["Hyderabad","India","Asia/Kolkata",0],
+    ["Karachi","Pakistan","Asia/Karachi",0],["Lahore","Pakistan","Asia/Karachi",0],
+    ["Islamabad","Pakistan","Asia/Karachi",0],["Dhaka","Bangladesh","Asia/Dhaka",0],
+    ["Kathmandu","Nepal","Asia/Kathmandu",0],["Colombo","Sri Lanka","Asia/Colombo",0],
+    ["Kabul","Afghanistan","Asia/Kabul",0],["Thimphu","Bhutan","Asia/Thimphu",0],
+    ["Malé","Maldives","Indian/Maldives",0],
+    ["Tokyo","Japan","Asia/Tokyo",1],["Osaka","Japan","Asia/Tokyo",0],
+    ["Seoul","South Korea","Asia/Seoul",1],["Beijing","China","Asia/Shanghai",1],
+    ["Shanghai","China","Asia/Shanghai",1],["Shenzhen","China","Asia/Shanghai",0],
+    ["Guangzhou","China","Asia/Shanghai",0],["Hong Kong","Hong Kong","Asia/Hong_Kong",1],
+    ["Macau","Macau","Asia/Macau",0],["Taipei","Taiwan","Asia/Taipei",1],
+    ["Kaohsiung","Taiwan","Asia/Taipei",0],["Taichung","Taiwan","Asia/Taipei",0],
+    ["Singapore","Singapore","Asia/Singapore",1],["Kuala Lumpur","Malaysia","Asia/Kuala_Lumpur",0],
+    ["Bangkok","Thailand","Asia/Bangkok",1],["Jakarta","Indonesia","Asia/Jakarta",0],
+    ["Denpasar (Bali)","Indonesia","Asia/Makassar",0],["Manila","Philippines","Asia/Manila",0],
+    ["Ho Chi Minh City","Vietnam","Asia/Ho_Chi_Minh",0],["Hanoi","Vietnam","Asia/Ho_Chi_Minh",0],
+    ["Phnom Penh","Cambodia","Asia/Phnom_Penh",0],["Vientiane","Laos","Asia/Vientiane",0],
+    ["Yangon","Myanmar","Asia/Yangon",0],["Ulaanbaatar","Mongolia","Asia/Ulaanbaatar",0],
+    ["Sydney","Australia","Australia/Sydney",1],["Melbourne","Australia","Australia/Melbourne",1],
+    ["Brisbane","Australia","Australia/Brisbane",0],["Perth","Australia","Australia/Perth",0],
+    ["Adelaide","Australia","Australia/Adelaide",0],["Canberra","Australia","Australia/Sydney",0],
+    ["Auckland","New Zealand","Pacific/Auckland",1],["Wellington","New Zealand","Pacific/Auckland",0],
+    ["Suva","Fiji","Pacific/Fiji",0],["Port Moresby","Papua New Guinea","Pacific/Port_Moresby",0],
+    ["Nouméa","New Caledonia","Pacific/Noumea",0],["Papeete","French Polynesia","Pacific/Tahiti",0],
+    ["Apia","Samoa","Pacific/Apia",0],["Nuku'alofa","Tonga","Pacific/Tongatapu",0],
+    ["Hagåtña","Guam","Pacific/Guam",0],
+    ["Almaty","Kazakhstan","Asia/Almaty",0],["Astana","Kazakhstan","Asia/Almaty",0],
+    ["Tashkent","Uzbekistan","Asia/Tashkent",0],["Bishkek","Kyrgyzstan","Asia/Bishkek",0],
+    ["Dushanbe","Tajikistan","Asia/Dushanbe",0],["Ashgabat","Turkmenistan","Asia/Ashgabat",0],
+    ["Baku","Azerbaijan","Asia/Baku",0],["Tbilisi","Georgia","Asia/Tbilisi",0],
+    ["Yerevan","Armenia","Asia/Yerevan",0]
+  ];
+  const ALIASES = {
+    "Tokyo":["東京","とうきょう"], "Seoul":["首爾","首尔","서울"], "Beijing":["北京"], "Shanghai":["上海"],
+    "Hong Kong":["香港"], "Taipei":["台北","臺北"], "Singapore":["新加坡"], "Bangkok":["曼谷"],
+    "Dubai":["杜拜","迪拜"], "New York":["紐約","纽约"], "Los Angeles":["洛杉磯","洛杉矶"],
+    "London":["倫敦","伦敦"], "Paris":["巴黎"], "Berlin":["柏林"], "Moscow":["莫斯科"],
+    "Istanbul":["伊斯坦堡","伊斯坦布尔"], "Sydney":["雪梨","悉尼"], "Auckland":["奧克蘭","奥克兰"],
+    "Toronto":["多倫多","多伦多"], "São Paulo":["聖保羅","圣保罗"], "Buenos Aires":["布宜諾斯艾利斯","布宜诺斯艾利斯"],
+    "Cairo":["開羅","开罗"], "Johannesburg":["約翰尼斯堡","约翰内斯堡"], "Mumbai":["孟買","孟买"],
+    "Rome":["羅馬","罗马"], "Madrid":["馬德里","马德里"], "Amsterdam":["阿姆斯特丹"]
+  };
+  const CITIES = RAW_CITIES.map(([name,country,tz,famous])=>({
+    name, country, tz, famous: !!famous, aliases: ALIASES[name] || [], key: name+"|"+country
+  }));
+
+  /* ================= State ================= */
+  const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  function findCityByTz(tz){ return CITIES.find(c=>c.tz===tz); }
+  const guess = findCityByTz(LOCAL_TZ);
+
+  const params = new URLSearchParams(location.search);
+
+  let home = null;
+  if(params.get("home")){
+    const [n,c,z] = params.get("home").split("~");
+    home = {name:n, country:c||"", tz:z||LOCAL_TZ};
+  } else {
+    const stored = localStorage.getItem("tzc_home");
+    if(stored){ try{ home = JSON.parse(stored); }catch(e){} }
+  }
+  if(!home){
+    home = guess ? {name:guess.name, country:guess.country, tz:guess.tz} : {name:LOCAL_TZ.split("/").pop().replace(/_/g," "), country:"", tz:LOCAL_TZ};
+  }
+
+  let addedZones = [];
+  if(params.get("tz")){
+    addedZones = params.get("tz").split(",").map(entry=>{
+      const [n,c,z] = entry.split("~");
+      return {name:n, country:c||"", tz:z};
+    }).filter(z=>z.tz);
+  } else {
+    const storedAdded = localStorage.getItem("tzc_added");
+    if(storedAdded){ try{ addedZones = JSON.parse(storedAdded); }catch(e){} }
+    else {
+      const defaults = ["America/New_York","Europe/London","Asia/Tokyo"].filter(tz=>tz!==home.tz);
+      addedZones = defaults.map(tz=>{ const c = findCityByTz(tz); return {name:c.name, country:c.country, tz:c.tz}; });
+    }
+  }
+
+  let selectedDate = params.get("d") || todayISO();
+  let cursorMinutes = 720;
+  let timelineStart = null;
+
+  function todayISO(){
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  /* ================= Timezone math ================= */
+  function zonedMidnightUTC(dateStr, timeZone){
+    const [Y,M,D] = dateStr.split("-").map(Number);
+    const guessDate = new Date(Date.UTC(Y, M-1, D, 0,0,0));
+    const fmt = new Intl.DateTimeFormat("en-US", {timeZone, hour12:false,
+      year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit"});
+    for(let i=0;i<3;i++){
+      const p = fmt.formatToParts(guessDate).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
+      const hh = p.hour === "24" ? 0 : +p.hour;
+      const localAsUTC = Date.UTC(+p.year, +p.month-1, +p.day, hh, +p.minute, +p.second);
+      const targetAsUTC = Date.UTC(Y, M-1, D, 0,0,0);
+      const diff = targetAsUTC - localAsUTC;
+      if(diff === 0) break;
+      guessDate.setTime(guessDate.getTime() + diff);
+    }
+    return guessDate;
+  }
+
+  function partsAt(instant, timeZone){
+    const fmt = new Intl.DateTimeFormat("en-US", {timeZone, hour12:false,
+      year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
+    const p = fmt.formatToParts(instant).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
+    let hh = p.hour === "24" ? 0 : +p.hour;
+    return {hour:hh, minute:+p.minute, year:+p.year, month:+p.month, day:+p.day};
+  }
+  function localHourFloat(instant, timeZone){ const p = partsAt(instant, timeZone); return p.hour + p.minute/60; }
+  function offsetLabel(timeZone, instant){
+    const parts = new Intl.DateTimeFormat("en-US", {timeZone, timeZoneName:"shortOffset"}).formatToParts(instant);
+    const off = parts.find(p=>p.type==="timeZoneName");
+    return off ? off.value.replace("GMT","UTC") : "";
+  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtHM(hourFloat){
+    let h = Math.floor(hourFloat); const m = Math.round((hourFloat-h)*60);
+    let hh = h % 24; if(hh<0) hh += 24;
+    return `${pad2(hh)}:${pad2(m)}`;
+  }
+  function dateLabelFor(instant, timeZone){
+    return new Intl.DateTimeFormat(LOCALE_TAG[LANG]||"en-US", {timeZone, weekday:"short", day:"numeric", month:"short"}).format(instant);
+  }
+
+  /* ================= DOM refs ================= */
+  const riverRoot = document.getElementById("rows-container");
+  const rulerTrack = document.getElementById("ruler-track");
+  const heroCity = document.getElementById("hero-city");
+  const heroCountry = document.getElementById("hero-country");
+  const heroDigits = document.getElementById("hero-digits");
+  const heroDate = document.getElementById("hero-date");
+  const readoutTime = document.getElementById("readout-time");
+  const readoutZone = document.getElementById("readout-zone");
+  const cursorRange = document.getElementById("cursor-range");
+  const dateInput = document.getElementById("date-picker");
+  const timeInput = document.getElementById("time-picker");
+  const whStart = document.getElementById("wh-start");
+  const whEnd = document.getElementById("wh-end");
+  const overlapTitle = document.getElementById("overlap-title");
+  const overlapSub = document.getElementById("overlap-sub");
+  const overlapText = document.getElementById("overlap-text");
+  const overlapSecondary = document.getElementById("overlap-secondary");
+  const geoNote = document.getElementById("geo-note");
+
+  dateInput.value = selectedDate;
+
+  /* ================= Bands / ruler ================= */
+  function bandGradient(timeZone, dayStart, dayEnd){
+    const stops = [];
+    for(let h=0; h<24; h++){
+      const inst = new Date(timelineStart.getTime() + h*3600*1000);
+      const lh = localHourFloat(inst, timeZone);
+      let color;
+      if(lh >= dayStart && lh < dayEnd) color = "var(--day-band)";
+      else if((lh >= dayStart-2 && lh < dayStart) || (lh >= dayEnd && lh < dayEnd+2)) color = "var(--twi-band)";
+      else color = "var(--night-band)";
+      stops.push(`${color} ${(h/24*100).toFixed(3)}%`, `${color} ${((h+1)/24*100).toFixed(3)}%`);
+    }
+    return `linear-gradient(90deg, ${stops.join(",")})`;
+  }
+
+  function buildRuler(){
+    rulerTrack.innerHTML = "";
+    for(let h=0; h<=24; h++){
+      const pct = h/24*100;
+      const tick = document.createElement("div");
+      tick.className = "ruler-tick" + (h%3===0 ? " major" : "");
+      tick.style.left = pct + "%";
+      if(h%3===0) tick.textContent = h===24 ? "" : (h===0?"0":h)+"h";
+      rulerTrack.appendChild(tick);
+    }
+  }
+
+  function allZonesForRiver(){
+    return [{name: home.name, country: home.country, tz: home.tz, pinned:true}, ...addedZones];
+  }
+
+  /* ================= Overlap computation ================= */
+  function computeOverlap(){
+    const zones = allZonesForRiver();
+    const ws = Math.max(0, Math.min(23, +whStart.value || 9));
+    const we = Math.max(ws+1, Math.min(24, +whEnd.value || 18));
+    const stepMin = 15, steps = 24*60/stepMin;
+    const windows = [];
+    let curStart = null;
+    const okAt = (i)=>{
+      const inst = new Date(timelineStart.getTime() + i*stepMin*60000);
+      return zones.every(z => { const lh = localHourFloat(inst, z.tz); return lh >= ws && lh < we; });
+    };
+    for(let i=0;i<=steps;i++){
+      const ok = i<steps ? okAt(i) : false;
+      if(ok && curStart===null) curStart = i;
+      if(!ok && curStart!==null){ windows.push({start:curStart, len:i-curStart}); curStart = null; }
+    }
+    windows.sort((a,b)=>b.len-a.len);
+    return {best: windows[0]||null, secondary: windows[1]||null, ws, we, stepMin, zones};
+  }
+
+  function windowLabel(w, stepMin){
+    const s = w.start*stepMin/60, e = (w.start+w.len)*stepMin/60;
+    return `${fmtHM(s)}–${fmtHM(e)}`;
+  }
+
+  function renderOverlap(){
+    const {best, secondary, ws, we, stepMin, zones} = computeOverlap();
+    const others = zones.length - 1;
+    if(others < 1){
+      overlapSub.textContent = "";
+      overlapText.textContent = t("overlapNeedMore");
+      overlapSecondary.hidden = true;
+      return;
+    }
+    const otherNames = zones.slice(1).map(z=>z.name).join(", ");
+    overlapSub.textContent = t("comparing") + home.name + " ↔ " + otherNames;
+
+    if(!best || best.len === 0){
+      overlapText.innerHTML = `${escapeHtml(t("overlapNone"))} ${escapeHtml(t("overlapNoneHint"))}`;
+      overlapSecondary.hidden = true;
+      return;
+    }
+    const label = windowLabel(best, stepMin);
+    const isNarrow = best.len*stepMin < 60;
+    overlapText.innerHTML = `${escapeHtml(isNarrow?t("overlapNarrow"):t("overlapBest"))}<span class="window">${label}</span> (${home.name})`;
+    if(secondary && secondary.len*stepMin >= 45){
+      overlapSecondary.hidden = false;
+      overlapSecondary.textContent = t("alsoWorks") + windowLabel(secondary, stepMin) + ` (${home.name})`;
+    } else {
+      overlapSecondary.hidden = true;
+    }
+  }
+
+  /* ================= Rows ================= */
+  function renderRows(){
+    riverRoot.innerHTML = "";
+    const zones = allZonesForRiver();
+    const {best, stepMin} = computeOverlap();
+
+    zones.forEach((z, idx)=>{
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const meta = document.createElement("div");
+      meta.className = "row-meta" + (z.pinned ? " pinned" : "");
+      const inst = new Date(timelineStart.getTime()+cursorMinutes*60000);
+      const off = offsetLabel(z.tz, inst);
+      meta.innerHTML = `
+        <div class="rm-top">
+          <span class="rm-city">${escapeHtml(z.name)}</span>
+          ${z.pinned ? "" : `<button class="rm-remove" aria-label="${escapeHtml(t('removeCity'))}" data-remove="${idx-1}">×</button>`}
+        </div>
+        <span class="rm-country">${escapeHtml(z.country||"")}${z.country?" · ":""}${off}</span>
+        <span class="rm-time" data-time="${z.tz}">--:--</span>
+        <span class="rm-date" data-date="${z.tz}">—</span>
+      `;
+      row.appendChild(meta);
+
+      const track = document.createElement("div");
+      track.className = "row-track";
+      track.style.background = bandGradient(z.tz, 8, 18);
+      track.dataset.tz = z.tz;
+
+      if(best && best.len>0){
+        const bandStart = best.start*stepMin/60/24*100;
+        const bandWidth = best.len*stepMin/60/24*100;
+        const overlapDiv = document.createElement("div");
+        overlapDiv.className = "band-overlap";
+        overlapDiv.style.left = bandStart+"%";
+        overlapDiv.style.width = bandWidth+"%";
+        track.appendChild(overlapDiv);
+      }
+
+      const nowOffsetMin = (Date.now() - timelineStart.getTime())/60000;
+      if(nowOffsetMin >= 0 && nowOffsetMin <= 1440){
+        const nowDiv = document.createElement("div");
+        nowDiv.className = "band-now";
+        nowDiv.style.left = (nowOffsetMin/1440*100)+"%";
+        track.appendChild(nowDiv);
+      }
+
+      [0,6,12,18].forEach(h=>{
+        const lbl = document.createElement("div");
+        lbl.className = "hour-label";
+        lbl.style.left = (h/24*100)+"%";
+        lbl.textContent = (h===0?"0":h)+"h";
+        track.appendChild(lbl);
+      });
+
+      const cursorDiv = document.createElement("div");
+      cursorDiv.className = "cursor-line";
+      cursorDiv.style.left = (cursorMinutes/1440*100)+"%";
+      cursorDiv.dataset.cursorLine = "1";
+      track.appendChild(cursorDiv);
+
+      row.appendChild(track);
+      riverRoot.appendChild(row);
+    });
+
+    riverRoot.querySelectorAll("[data-remove]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const i = +btn.dataset.remove;
+        addedZones.splice(i,1);
+        persistState();
+        renderAll();
+      });
+    });
+
+    updateRowTimes();
+  }
+
+  function updateRowTimes(){
+    const instant = new Date(timelineStart.getTime() + cursorMinutes*60000);
+    document.querySelectorAll("[data-time]").forEach(el=>{
+      const tz = el.dataset.time;
+      el.textContent = fmtHM(localHourFloat(instant, tz));
+    });
+    document.querySelectorAll("[data-date]").forEach(el=>{
+      const tz = el.dataset.date;
+      el.textContent = dateLabelFor(instant, tz);
+    });
+    document.querySelectorAll("[data-cursor-line]").forEach(el=>{
+      el.style.left = (cursorMinutes/1440*100)+"%";
+    });
+
+    readoutTime.textContent = fmtHM(localHourFloat(instant, home.tz));
+    readoutZone.textContent = home.name;
+
+    timeInput.value = fmtHM(cursorMinutes/60);
+
+    const isNow = Math.abs(Date.now() - instant.getTime()) < 4*60000;
+    document.querySelector('[data-jump="now"]').classList.toggle("active", isNow);
+  }
+
+  function renderHero(){
+    heroCity.textContent = home.name;
+    heroCountry.textContent = home.country || "";
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("en-US", {timeZone: home.tz, hour12:false, hour:"2-digit", minute:"2-digit", second:"2-digit"});
+    const p = fmt.formatToParts(now).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
+    heroDigits.innerHTML = `${p.hour}:${p.minute}<span class="sec">:${p.second}</span>`;
+    heroDate.textContent = new Intl.DateTimeFormat(LOCALE_TAG[LANG]||"en-US", {timeZone: home.tz, weekday:"long", month:"long", day:"numeric"}).format(now);
+  }
+
+  function renderAll(){
+    timelineStart = zonedMidnightUTC(selectedDate, home.tz);
+    buildRuler();
+    renderOverlap();
+    renderRows();
+    syncURL();
+  }
+
+  function persistState(){
+    localStorage.setItem("tzc_home", JSON.stringify(home));
+    localStorage.setItem("tzc_added", JSON.stringify(addedZones));
+  }
+
+  function syncURL(){
+    const p = new URLSearchParams();
+    p.set("home", [home.name, home.country, home.tz].join("~"));
+    if(addedZones.length) p.set("tz", addedZones.map(z=>[z.name,z.country,z.tz].join("~")).join(","));
+    p.set("d", selectedDate);
+    history.replaceState(null, "", location.pathname + "?" + p.toString());
+    persistState();
+  }
+
+  /* ================= Interactions ================= */
+  cursorRange.addEventListener("input", ()=>{ cursorMinutes = +cursorRange.value; updateRowTimes(); });
+
+  document.querySelectorAll(".ctrl-btn[data-jump]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      if(btn.dataset.jump === "now"){ setCursorToNow(); }
+      else{
+        cursorMinutes = Math.max(0, Math.min(1439, cursorMinutes + (+btn.dataset.jump)*60));
+        cursorRange.value = cursorMinutes;
+        updateRowTimes();
+      }
+    });
+  });
+
+  document.getElementById("jump-now-btn").addEventListener("click", setCursorToNow);
+
+  function setCursorToNow(){
+    const nowOffsetMin = Math.round((Date.now() - timelineStart.getTime())/60000);
+    if(nowOffsetMin >= 0 && nowOffsetMin <= 1439){ cursorMinutes = nowOffsetMin; }
+    else{
+      selectedDate = todayISO();
+      dateInput.value = selectedDate;
+      timelineStart = zonedMidnightUTC(selectedDate, home.tz);
+      cursorMinutes = Math.max(0, Math.min(1439, Math.round((Date.now() - timelineStart.getTime())/60000)));
+      renderRows();
+    }
+    cursorRange.value = cursorMinutes;
+    updateRowTimes();
+  }
+
+  dateInput.addEventListener("change", ()=>{ selectedDate = dateInput.value || todayISO(); renderAll(); });
+  timeInput.addEventListener("change", ()=>{
+    const [hh,mm] = (timeInput.value||"00:00").split(":").map(Number);
+    cursorMinutes = Math.max(0, Math.min(1439, hh*60+mm));
+    cursorRange.value = cursorMinutes;
+    updateRowTimes();
+  });
+
+  whStart.addEventListener("input", ()=>{ renderOverlap(); renderRows(); });
+  whEnd.addEventListener("input", ()=>{ renderOverlap(); renderRows(); });
+
+  /* ---------- search (generic) ---------- */
+  function buildResultList(query, excludeTzKeys){
+    const q = query.trim().toLowerCase();
+    if(!q){
+      return {label: t("popularCities"), items: CITIES.filter(c=>c.famous && !excludeTzKeys.has(c.key)).slice(0,14)};
+    }
+    const scored = CITIES.filter(c=>!excludeTzKeys.has(c.key)).map(c=>{
+      const hay = [c.name, c.country, ...(c.aliases||[])].join(" ").toLowerCase();
+      const idx = hay.indexOf(q);
+      if(idx<0) return null;
+      return {c, score:(c.famous?0:1000)+idx};
+    }).filter(Boolean).sort((a,b)=>a.score-b.score).slice(0,12).map(x=>x.c);
+    return {label: t("searchResults"), items: scored};
+  }
+
+  function renderResultList(box, query, excludeTzKeys, onPick){
+    const {label, items} = buildResultList(query, excludeTzKeys);
+    box.innerHTML = "";
+    if(items.length === 0){
+      box.innerHTML = `<div class="empty">${escapeHtml(t("searchEmpty"))}</div>`;
+    } else {
+      const lbl = document.createElement("div");
+      lbl.className = "group-label"; lbl.textContent = label;
+      box.appendChild(lbl);
+      items.forEach(c=>{
+        const b = document.createElement("button");
+        const off = offsetLabel(c.tz, new Date());
+        b.innerHTML = `<span class="r-main"><span class="r-city">${escapeHtml(c.name)}</span><span class="r-country">${escapeHtml(c.country)}</span></span><span class="r-meta">${off}</span>`;
+        b.addEventListener("click", ()=>onPick(c));
+        box.appendChild(b);
+      });
+    }
+    box.hidden = false;
+  }
+
+  const searchInput = document.getElementById("city-search");
+  const resultsBox = document.getElementById("search-results");
+  searchInput.addEventListener("input", ()=>{
+    const exclude = new Set([home.name+"|"+home.country, ...addedZones.map(z=>z.name+"|"+z.country)]);
+    if(!searchInput.value.trim() && document.activeElement !== searchInput){ resultsBox.hidden = true; return; }
+    renderResultList(resultsBox, searchInput.value, exclude, (c)=>{
+      addedZones.push({name:c.name, country:c.country, tz:c.tz});
+      searchInput.value = ""; resultsBox.hidden = true;
+      persistState(); renderAll();
+    });
+  });
+  searchInput.addEventListener("focus", ()=>{ searchInput.dispatchEvent(new Event("input")); });
+
+  const homeSearchWrap = document.getElementById("home-search");
+  const homeSearchInput = document.getElementById("home-search-input");
+  const homeResultsBox = document.getElementById("home-results");
+  document.getElementById("change-home-btn").addEventListener("click", ()=>{
+    homeSearchWrap.classList.toggle("open");
+    if(homeSearchWrap.classList.contains("open")){ homeSearchInput.value=""; homeSearchInput.focus(); homeSearchInput.dispatchEvent(new Event("input")); }
+  });
+  homeSearchInput.addEventListener("input", ()=>{
+    const exclude = new Set();
+    renderResultList(homeResultsBox, homeSearchInput.value, exclude, (c)=>{
+      home = {name:c.name, country:c.country, tz:c.tz};
+      homeSearchWrap.classList.remove("open");
+      persistState(); renderHero(); renderAll();
+    });
+  });
+
+  document.addEventListener("click", (e)=>{
+    if(!resultsBox.contains(e.target) && e.target !== searchInput) resultsBox.hidden = true;
+    if(!homeResultsBox.contains(e.target) && e.target !== homeSearchInput && !homeSearchWrap.contains(e.target)) homeResultsBox.hidden = true;
+  });
+
+  /* ---------- precise location (optional, progressive enhancement) ---------- */
+  document.getElementById("precise-loc-btn").addEventListener("click", ()=>{
+    if(!("geolocation" in navigator)){ return; }
+    geoNote.hidden = false; geoNote.textContent = t("geoTrying");
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 6000);
+    navigator.geolocation.getCurrentPosition(async (pos)=>{
+      clearTimeout(timeout);
+      try{
+        const {latitude, longitude} = pos.coords;
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`, {signal: controller.signal});
+        const data = await res.json();
+        const city = data.city || data.locality || home.name;
+        const country = data.countryName || home.country;
+        home = {name: city, country: country, tz: home.tz};
+        persistState(); renderHero(); renderAll();
+        geoNote.hidden = true;
+      }catch(e){
+        geoNote.textContent = t("geoFailed");
+        setTimeout(()=>{ geoNote.hidden = true; }, 4000);
+      }
+    }, ()=>{
+      clearTimeout(timeout);
+      geoNote.textContent = t("geoFailed");
+      setTimeout(()=>{ geoNote.hidden = true; }, 4000);
+    }, {timeout: 6000});
+  });
+
+  /* ---------- share ---------- */
+  document.getElementById("share-btn").addEventListener("click", async ()=>{
+    syncURL();
+    const url = location.href;
+    const toast = document.getElementById("toast");
+    try{ await navigator.clipboard.writeText(url); toast.textContent = t("linkCopied"); }
+    catch(e){ toast.textContent = url; }
+    toast.classList.add("show");
+    setTimeout(()=>toast.classList.remove("show"), 1800);
+  });
+
+  /* ---------- live clock ---------- */
+  setInterval(renderHero, 1000);
+  setInterval(()=>{
+    if(document.querySelector('[data-jump="now"]').classList.contains("active")) setCursorToNow();
+    renderRows();
+  }, 30000);
+
+  /* ================= Init ================= */
+  applyI18n();
+  renderHero();
+  timelineStart = zonedMidnightUTC(selectedDate, home.tz);
+  cursorMinutes = Math.max(0, Math.min(1439, Math.round((Date.now() - timelineStart.getTime())/60000)));
+  cursorRange.value = cursorMinutes;
+  renderAll();
+
+})();
+</script>
+</body>
+</html>
